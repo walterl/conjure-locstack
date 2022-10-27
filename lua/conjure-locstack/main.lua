@@ -266,7 +266,7 @@ local function stacktrace__3eloclist()
   return send_op_msg("stacktrace", nil, _30_)
 end
 _2amodule_2a["stacktrace->loclist"] = stacktrace__3eloclist
-local function ns_path__3elocitem(ns, lnum, full_sym, cb)
+local function ns_path__3elocitem(ns, full_sym, lnum, cb)
   local function _39_(path)
     local function _40_()
       if path then
@@ -282,7 +282,7 @@ local function ns_path__3elocitem(ns, lnum, full_sym, cb)
   return query_ns_path(ns, _39_)
 end
 _2amodule_locals_2a["ns-path->locitem"] = ns_path__3elocitem
-local function ns_sym__3elocitem(ns, sym, full_sym, cb)
+local function ns_sym__3elocitem(ns, sym, full_sym, lnum, cb)
   local function _41_(info)
     local function _43_()
       if info then
@@ -292,7 +292,7 @@ local function ns_sym__3elocitem(ns, sym, full_sym, cb)
         local file = _let_42_["file"]
         local line = _let_42_["line"]
         local column = _let_42_["column"]
-        local item = {filename = nrepl__3envim_path(file), module = ns0, lnum = line, text = full_sym}
+        local item = {filename = nrepl__3envim_path(file), module = ns0, lnum = (lnum or line), text = full_sym}
         dlog(("; got info for " .. full_sym))
         return item
       else
@@ -315,16 +315,16 @@ local function line__3elocitem(line, cb)
   local ns = _let_45_[1]
   local sym = _let_45_[2]
   if a["nil?"](sym) then
-    return ns_path__3elocitem(ns, lnum, full_sym, cb)
+    return ns_path__3elocitem(ns, full_sym, lnum, cb)
   else
     local function _46_(item)
       if item then
         return cb(item)
       else
-        return ns_path__3elocitem(ns, lnum, full_sym, cb)
+        return ns_path__3elocitem(ns, full_sym, lnum, cb)
       end
     end
-    return ns_sym__3elocitem(ns, sym, full_sym, _46_)
+    return ns_sym__3elocitem(ns, sym, full_sym, lnum, _46_)
   end
 end
 _2amodule_locals_2a["line->locitem"] = line__3elocitem

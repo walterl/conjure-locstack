@@ -141,7 +141,7 @@
                 (set no-url-frames (a.filter #(not (frame=? $ frm)) no-url-frames))
                 (set-loclist)))))))))
 
-(defn- ns-path->locitem [ns lnum full-sym cb]
+(defn- ns-path->locitem [ns full-sym lnum cb]
   (query-ns-path
     ns
     (fn [path]
@@ -160,7 +160,7 @@
              :lnum lnum
              :text full-sym}))))))
 
-(defn- ns-sym->locitem [ns sym full-sym cb]
+(defn- ns-sym->locitem [ns sym full-sym lnum cb]
   (query-ns-sym-info
     ns sym
     (fn [info]
@@ -168,7 +168,7 @@
             (let [{: ns : name : file : line : column} info
                   item {:filename (nrepl->nvim-path file)
                         :module ns
-                        :lnum line
+                        :lnum (or lnum line)
                         :text full-sym}]
               (dlog (.. "; got info for " full-sym))
               item))))))
@@ -178,13 +178,13 @@
         full-sym (.. scope "/" fname)
         [ns sym] (str.split scope "%$")]
     (if (a.nil? sym)
-      (ns-path->locitem ns lnum full-sym cb)
+      (ns-path->locitem ns full-sym lnum cb)
       (ns-sym->locitem
-        ns sym full-sym
+        ns sym full-sym lnum
         (fn [item]
           (if item
             (cb item)
-            (ns-path->locitem ns lnum full-sym cb)))))))
+            (ns-path->locitem ns full-sym lnum cb)))))))
 
 (defn text-stacktrace->loclist [code success-fn err-fn]
   (dlog (.. "; code: " code))
