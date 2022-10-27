@@ -206,7 +206,7 @@ local function st_frames__3eloclist_items(frames)
   return tbl_15_auto
 end
 _2amodule_2a["st-frames->loclist-items"] = st_frames__3eloclist_items
-local function stacktrace__3eloclist()
+local function stacktrace_op__3eloclist()
   log.append({"; [LocStack] Loading last stracktrace... \226\143\179"})
   local function _30_(msg)
     local frames = a.get(msg, "stacktrace", {})
@@ -265,7 +265,7 @@ local function stacktrace__3eloclist()
   end
   return send_op_msg("stacktrace", nil, _30_)
 end
-_2amodule_2a["stacktrace->loclist"] = stacktrace__3eloclist
+_2amodule_2a["stacktrace-op->loclist"] = stacktrace_op__3eloclist
 local function ns_path__3elocitem(ns, full_sym, lnum, cb)
   local function _39_(path)
     local function _40_()
@@ -443,7 +443,7 @@ end
 _2amodule_2a["last-stacktrace->loclist"] = last_stacktrace__3eloclist
 local function init()
   local function _71_()
-    return stacktrace__3eloclist()
+    return last_stacktrace__3eloclist()
   end
   nvim.create_user_command("LocStack", _71_, {desc = "Load last stacktrace into location list"})
   local function _72_(_241)
@@ -451,9 +451,9 @@ local function init()
   end
   nvim.create_user_command("LocStackReg", _72_, {nargs = "?", desc = "Load stack trace from specified register (or \") into location list"})
   local function _73_()
-    return last_stacktrace__3eloclist()
+    return stacktrace_op__3eloclist()
   end
-  return nvim.create_user_command("LocStackLast", _73_, {desc = "Load last stacktrace into location list (faster, but less accurate)"})
+  return nvim.create_user_command("LocStackSlow", _73_, {desc = "Load last stacktrace into location list (uses slow 'stacktrace' op)"})
 end
 _2amodule_2a["init"] = init
 return _2amodule_2a

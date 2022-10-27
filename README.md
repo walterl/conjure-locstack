@@ -17,12 +17,19 @@ Requires [Conjure](nhttps://github.com/olical/conjure), connected to an nREPL se
 
 ## Usage
 
-```
-:LocStack
-```
+Load last stack trace into location list:
 
-**NOTE:** It takes upwards of 40 seconds for the command to complete. This is
-due to the `stacktrace` nREPL operation taking so long to respond.
+    :LocStack
+
+Load stack trace from register `x` (defaults to `"`) into location list:
+
+    :LocStackReg x
+
+The value in the register must be as returned by `(-> ex :Throwable->map
+:trace)`, verbatim.
+
+This allows you to yank exception stack traces from logs, and load them into
+the location list.
 
 ## Trivia
 

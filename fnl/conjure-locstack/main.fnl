@@ -110,7 +110,7 @@
       ;;  :text name}
       {:filename file-url :module ns :lnum line :text name})))
 
-(defn stacktrace->loclist []
+(defn stacktrace-op->loclist []
   "Queries nREPL for last stacktrace (`:stacktrace` op), and loads it into the
   current location list."
   (log.append ["; [LocStack] Loading last stracktrace... ⏳"])
@@ -253,7 +253,7 @@
 (defn init []
   (nvim.create_user_command
     :LocStack
-    #(stacktrace->loclist)
+    #(last-stacktrace->loclist)
     {:desc "Load last stacktrace into location list"})
   (nvim.create_user_command
     :LocStackReg
@@ -261,6 +261,6 @@
     {:nargs "?"
      :desc "Load stack trace from specified register (or \") into location list"})
   (nvim.create_user_command
-    :LocStackLast
-    #(last-stacktrace->loclist)
-    {:desc "Load last stacktrace into location list (faster, but less accurate)"}))
+    :LocStackSlow
+    #(stacktrace-op->loclist)
+    {:desc "Load last stacktrace into location list (uses slow 'stacktrace' op)"}))
