@@ -50,7 +50,7 @@ local function send_op_msg(op, msg, cb)
       _4_ = nil
     end
     local function _6_(msg0)
-      dlog("; response: ", view.serialise(msg0))
+      dlog(("; response: " .. view.serialise(msg0)))
       local function _7_()
         if not msg0.status["no-info"] then
           return ((msg0).info or msg0)
@@ -232,7 +232,7 @@ local function stacktrace__3eloclist()
       end
       no_url_frames = tbl_15_auto
     end
-    local log_results
+    local set_loclist
     local function _34_()
       if a["empty?"](no_url_frames) then
         local items = st_frames__3eloclist_items(frames)
@@ -244,7 +244,7 @@ local function stacktrace__3eloclist()
         return dlog(("; Still waiting for info on " .. a.count(no_url_frames) .. " frames."))
       end
     end
-    log_results = _34_
+    set_loclist = _34_
     for _, frm in ipairs(no_url_frames) do
       local function _36_(loc)
         local frm_2a = a.assoc(frm, "file-url", loc)
@@ -260,7 +260,7 @@ local function stacktrace__3eloclist()
           return not frame_3d_3f(_241, frm)
         end
         no_url_frames = a.filter(_39_, no_url_frames)
-        return log_results()
+        return set_loclist()
       end
       frame_loc(frm, _36_)
     end
@@ -269,11 +269,144 @@ local function stacktrace__3eloclist()
   return send_op_msg("stacktrace", nil, _31_)
 end
 _2amodule_2a["stacktrace->loclist"] = stacktrace__3eloclist
+local function ns__3elocitem(ns, lnum, full_sym, cb)
+  local function _40_(msg)
+    local path = a.get(msg, "path")
+    local function _41_()
+      if path then
+        dlog(("; got path for " .. ns .. ": " .. path))
+        return {filename = nrepl__3envim_path(path), module = ns, lnum = lnum, text = ("(" .. full_sym .. ")")}
+      else
+        dlog(("; no path for " .. full_sym .. " either. Giving up \194\175\\_(\227\131\132)_/\194\175."))
+        return {filename = nil, module = ns, lnum = lnum, text = ("(" .. full_sym .. ")")}
+      end
+    end
+    return cb(_41_())
+  end
+  return send_op_msg("ns-path", {ns = ns}, _40_)
+end
+_2amodule_locals_2a["ns->locitem"] = ns__3elocitem
+local function line__3elocitem(line, cb)
+  local _let_42_ = str.split(line, ",,,")
+  local full_sym = _let_42_[1]
+  local jfn = _let_42_[2]
+  local filename = _let_42_[3]
+  local lnum = _let_42_[4]
+  local _let_43_ = str.split(full_sym, "%$")
+  local ns = _let_43_[1]
+  local sym = _let_43_[2]
+  if a["nil?"](sym) then
+    return ns__3elocitem(ns, lnum, full_sym, cb)
+  else
+    local function _44_(msg)
+      if msg then
+        local _let_45_ = msg
+        local ns0 = _let_45_["ns"]
+        local name = _let_45_["name"]
+        local file = _let_45_["file"]
+        local line0 = _let_45_["line"]
+        local column = _let_45_["column"]
+        local item = {filename = nrepl__3envim_path(file), module = ns0, lnum = line0, text = (name .. " (" .. full_sym .. ")")}
+        dlog(("; got info for " .. full_sym))
+        return cb(item)
+      else
+        return ns__3elocitem(ns, lnum, full_sym, cb)
+      end
+    end
+    return send_op_msg("info", {ns = ns, sym = sym}, _44_)
+  end
+end
+_2amodule_locals_2a["line->locitem"] = line__3elocitem
+local function escape(s)
+  return string.gsub(nvim.fn.escape(s, "\""), "\n", "\\n")
+end
+_2amodule_locals_2a["escape"] = escape
+local function serialize_frame_code(frames_str)
+  local code = escape(frames_str)
+  return a.str("(->> \"", code, "\" (clojure.edn/read-string) (map #(clojure.string/join \",,,\" %)) (clojure.string/join \\newline))")
+end
+_2amodule_locals_2a["serialize-frame-code"] = serialize_frame_code
+local function register_stacktrace__3eloclist(reg)
+  local reg0
+  if a["empty?"](reg) then
+    reg0 = "\""
+  else
+    reg0 = reg
+  end
+  log.append({("; [LocStack] Processing stack frames in register " .. reg0 .. "... \226\143\179")})
+  local code = serialize_frame_code(nvim.fn.getreg(reg0))
+  dlog(("; code: " .. code))
+  local function _49_(msgs)
+    local res
+    do
+      local _50_ = a.first(msgs)
+      if (nil ~= _50_) then
+        local _51_ = a.get(_50_, "value")
+        if (nil ~= _51_) then
+          local _52_ = string.gsub(_51_, "^\"", "")
+          if (nil ~= _52_) then
+            local _53_ = string.gsub(_52_, "\"$", "")
+            if (nil ~= _53_) then
+              res = string.gsub(_53_, "\\n", "\n")
+            else
+              res = _53_
+            end
+          else
+            res = _52_
+          end
+        else
+          res = _51_
+        end
+      else
+        res = _50_
+      end
+    end
+    if res then
+      dlog(("; res: " .. view.serialise(res)))
+      local lines = str.split(res, "\n")
+      local set_loclist
+      local function _58_()
+        local str_count = a.count(a.filter(a["string?"], lines))
+        if (0 < str_count) then
+          return dlog(("; Still waiting for info on " .. str_count .. " lines."))
+        else
+          nvim.fn.setloclist(0, lines, "r")
+          nvim.ex.lopen()
+          return log.append({("; [LocStack] Stacktrace from register " .. reg0 .. " loaded into location list \226\156\148\239\184\143")})
+        end
+      end
+      set_loclist = _58_
+      for _, line in ipairs(lines) do
+        local function _60_(item)
+          local function _61_(_241)
+            if (line == _241) then
+              return item
+            else
+              return _241
+            end
+          end
+          lines = a.map(_61_, lines)
+          return set_loclist(lines)
+        end
+        line__3elocitem(line, _60_)
+      end
+      return nil
+    else
+      return log.append({"; [LocStack] Something went wrong \240\159\152\181", ("; [LocStack] Did you yank the _entire_ exception's :trace value (including the surrounding vector) into register " .. reg0 .. "?"), "(-> ex Throwable->map :trace)"})
+    end
+  end
+  return server.eval({code = code}, nrepl["with-all-msgs-fn"](_49_))
+end
+_2amodule_2a["register-stacktrace->loclist"] = register_stacktrace__3eloclist
 local function init()
-  local function _40_()
+  local function _64_()
     return stacktrace__3eloclist()
   end
-  return nvim.create_user_command("LocStack", _40_, {})
+  nvim.create_user_command("LocStack", _64_, {desc = "Load last stacktrace into location list"})
+  local function _65_(_241)
+    return register_stacktrace__3eloclist((_241).args)
+  end
+  return nvim.create_user_command("LocStackReg", _65_, {nargs = "?", desc = "Load stack trace from specified register (or \") into location list"})
 end
 _2amodule_2a["init"] = init
 return _2amodule_2a
