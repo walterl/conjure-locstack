@@ -271,10 +271,10 @@ local function ns_path__3elocitem(ns, lnum, full_sym, cb)
     local function _40_()
       if path then
         dlog(("; got path for " .. ns .. ": " .. path))
-        return {filename = nrepl__3envim_path(path), module = ns, lnum = lnum, text = ("(" .. full_sym .. ")")}
+        return {filename = nrepl__3envim_path(path), module = ns, lnum = lnum, text = full_sym}
       else
         dlog(("; no path for " .. full_sym .. " either. Giving up \194\175\\_(\227\131\132)_/\194\175."))
-        return {filename = nil, module = ns, lnum = lnum, text = ("(" .. full_sym .. ")")}
+        return {filename = nil, module = ns, lnum = lnum, text = full_sym}
       end
     end
     return cb(_40_())
@@ -292,7 +292,7 @@ local function ns_sym__3elocitem(ns, sym, full_sym, cb)
         local file = _let_42_["file"]
         local line = _let_42_["line"]
         local column = _let_42_["column"]
-        local item = {filename = nrepl__3envim_path(file), module = ns0, lnum = line, text = (name .. " (" .. full_sym .. ")")}
+        local item = {filename = nrepl__3envim_path(file), module = ns0, lnum = line, text = full_sym}
         dlog(("; got info for " .. full_sym))
         return item
       else
@@ -306,11 +306,12 @@ end
 _2amodule_locals_2a["ns-sym->locitem"] = ns_sym__3elocitem
 local function line__3elocitem(line, cb)
   local _let_44_ = str.split(line, ",,,")
-  local full_sym = _let_44_[1]
-  local _ = _let_44_[2]
-  local _0 = _let_44_[3]
+  local scope = _let_44_[1]
+  local fname = _let_44_[2]
+  local _ = _let_44_[3]
   local lnum = _let_44_[4]
-  local _let_45_ = str.split(full_sym, "%$")
+  local full_sym = (scope .. "/" .. fname)
+  local _let_45_ = str.split(scope, "%$")
   local ns = _let_45_[1]
   local sym = _let_45_[2]
   if a["nil?"](sym) then

@@ -152,13 +152,13 @@
             {:filename (nrepl->nvim-path path)
              :module ns
              :lnum lnum
-             :text (.. "(" full-sym ")")})
+             :text full-sym})
           (do
             (dlog (.. "; no path for " full-sym " either. Giving up ¯\\_(ツ)_/¯."))
             {:filename nil
              :module ns
              :lnum lnum
-             :text (.. "(" full-sym ")")}))))))
+             :text full-sym}))))))
 
 (defn- ns-sym->locitem [ns sym full-sym cb]
   (query-ns-sym-info
@@ -169,13 +169,14 @@
                   item {:filename (nrepl->nvim-path file)
                         :module ns
                         :lnum line
-                        :text (.. name " (" full-sym ")")}]
+                        :text full-sym}]
               (dlog (.. "; got info for " full-sym))
               item))))))
 
 (defn- line->locitem [line cb]
-  (let [[full-sym _ _ lnum] (str.split line ",,,")
-        [ns sym] (str.split full-sym "%$")]
+  (let [[scope fname _ lnum] (str.split line ",,,")
+        full-sym (.. scope "/" fname)
+        [ns sym] (str.split scope "%$")]
     (if (a.nil? sym)
       (ns-path->locitem ns lnum full-sym cb)
       (ns-sym->locitem
